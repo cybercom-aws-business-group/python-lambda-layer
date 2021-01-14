@@ -1,0 +1,64 @@
+---
+Description: Test Lambda function for Python Lambda Layer
+###
+### Parameters
+Parameters:
+  LayerArn:
+    Type: String
+    Default: ''
+    Description: Python Lambda Layer Arn
+###
+### Resources
+Resources:
+    LayerFncRole:
+        Type: AWS::IAM::Role
+        Properties:
+            Path: /
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Effect: Allow
+                      Principal:
+                        Service:
+                            - lambda.amazonaws.com
+                      Action:
+                        - sts:AssumeRole
+            Policies:
+                - PolicyName: logpermissions
+                  PolicyDocument:
+                    Version: '2012-10-17'
+                    Statement:
+                      - Effect: Allow
+                        Action:
+                          - logs:CreateLogGroup
+                          - logs:CreateLogStream
+                          - logs:PutLogEvents
+                        Resource: arn:aws:logs:*:*:*  
+
+    LayerFnc:
+      Type: AWS::Lambda::Function
+      DependsOn:
+       - LayerFncRole
+      Properties:
+        Code:
+            ZipFile: !Sub |
+              import requests
+              import logging
+
+              logger = logging.getLogger()
+              logger.setLevel(logging.INFO)
+
+              def lambda_handler(event, context):
+                  r = requests.get("https://www.github.com/")
+                  logger.info("status: " + str(r.status_code))
+
+                  return r.status_code
+
+        Description: simple test function
+        Handler: index.lambda_handler
+        Layers:
+          - !Ref LayerArn
+        MemorySize: 128
+        Role: !GetAtt LayerFncRole.Arn
+        Runtime: python3.7
+        Timeout: 5

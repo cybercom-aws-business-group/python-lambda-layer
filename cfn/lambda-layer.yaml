@@ -1,0 +1,47 @@
+---
+Description: Lambda Layer with boto3, requests
+###
+### Parameters
+Parameters:
+  OrganizationId:
+    Type: String
+    Default: ''
+    Description: If set, Organizations ID to share this layer to.
+  LayerZipName:
+    Type: String
+    Default: 'layer_package.zip'
+    Description: Zip file that contains the Layer modules.
+###
+### Conditions
+Conditions:
+  HasOrg: !Not [ !Equals [ !Ref OrganizationId, '' ]]
+###
+### Resources
+Resources:
+  LambdaLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleRuntimes:
+        - python3.6
+        - python3.7
+      Content:
+        S3Bucket: !ImportValue 'layer-bucket-name'
+        S3Key: !Ref LayerZipName
+      Description: python3 boto3, requests
+      LayerName: python-modules-layer
+ 
+  LayerPermission:
+    Condition: HasOrg
+    DependsOn: LambdaLayer
+    Type: AWS::Lambda::LayerVersionPermission
+    Properties:
+      Action: lambda:GetLayerVersion
+      LayerVersionArn: !Ref LambdaLayer
+      OrganizationId: !Ref OrganizationId
+      Principal: '*'
+###
+### Outputs
+Outputs:
+  LayerArn:
+    Description: Python layer arn
+    Value: !Ref LambdaLayer

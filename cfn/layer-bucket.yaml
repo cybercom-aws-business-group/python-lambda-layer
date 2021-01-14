@@ -1,0 +1,20 @@
+---
+###
+### Resources
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+
+  CfnStagingBucket:
+    Type: AWS::S3::Bucket
+###
+### Outputs
+Outputs:
+  CfnStagingBucket:
+    Description: Cloudformation staging bucket name 
+    Value: !Ref CfnStagingBucket
+  LayerBucket:
+    Description: S3 bucket name 
+    Value: !Ref Bucket
+    Export:
+      Name: layer-bucket-name
